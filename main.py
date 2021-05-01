@@ -1,23 +1,22 @@
 #Written by: Sepehr Bazyar
-import translators as trans, logging
+import translators, logging
 from typing import Callable
 
 logging.basicConfig(level = logging.INFO, format = '%(asctime)s - %(levelname)-10s - %(message)s')
 
-def translator(to_lang, from_lang = 'auto', provider = 'bing') -> Callable: # decorator with parameters
-    def inner(func: Callable) -> Callable:
-        def calculate(*args, **kwargs):
-            my_text = func(*args, **kwargs)
-            if isinstance(my_text, str): my_text = [my_text] #output of func may be string
-            translations = []
-            for sentence in my_text:
-                if sentence: #sentence not empty
-                    translations.append(eval(f"trans.{provider}(sentence, '{from_lang}', '{to_lang}')"))
-            return translations
-        return calculate
-    return inner
+class Translator:
+    def __init__(self, func: Callable):
+        self.function = func
 
-@translator('fa', provider = 'google')
+    def __call__(self, *args, **kwargs):
+        my_text = self.function(*args, **kwargs)
+        if isinstance(my_text, str): my_text = [my_text] #output of func may be string
+        translations = []
+        for sentence in my_text:
+            if sentence: translations.append(translators.bing(sentence, to_language = 'fa')) #sentence not empty
+        return translations
+
+@Translator
 def text_spliter(path: str) -> list:
     try:
         with open(path) as fl:
